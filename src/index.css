@@ -1,0 +1,550 @@
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== ROOT VARIABLES ===== */
+:root {
+  --navy-950: #040810;
+  --navy-900: #081120;
+  --navy-800: #0B1220;
+  --navy-700: #0d1630;
+  --navy-600: #111e3a;
+  --electric: #00D4FF;
+  --electric-dim: #0099cc;
+  --plasma: #0066FF;
+  --threat-critical: #FF1744;
+  --threat-high: #FF6D00;
+  --threat-medium: #FFD600;
+  --threat-low: #00E676;
+  --panel-bg: rgba(8, 17, 32, 0.92);
+  --border-glow: rgba(0, 212, 255, 0.15);
+  --text-primary: #E8F4FD;
+  --text-secondary: #7BA7C4;
+  --text-muted: #4A6580;
+}
+
+/* ===== BASE RESET ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--navy-900);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.25);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.5);
+}
+
+/* ===== GLASSMORPHISM COMPONENTS ===== */
+.glass {
+  background: rgba(8, 17, 32, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(13, 22, 48, 0.9), rgba(8, 17, 32, 0.95));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.4), transparent);
+}
+
+.panel-surface {
+  background: linear-gradient(180deg, rgba(11, 18, 32, 0.98) 0%, rgba(8, 15, 28, 0.98) 100%);
+  border-right: 1px solid rgba(0, 212, 255, 0.08);
+}
+
+/* ===== HUD DECORATIONS ===== */
+.hud-corner {
+  position: relative;
+}
+.hud-corner::before,
+.hud-corner::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+}
+.hud-corner-tl::before {
+  top: 0; left: 0;
+  border-top: 2px solid var(--electric);
+  border-left: 2px solid var(--electric);
+}
+.hud-corner-tr::after {
+  top: 0; right: 0;
+  border-top: 2px solid var(--electric);
+  border-right: 2px solid var(--electric);
+}
+.hud-corner-br::before {
+  bottom: 0; right: 0;
+  border-bottom: 2px solid var(--electric);
+  border-right: 2px solid var(--electric);
+}
+.hud-corner-bl::after {
+  bottom: 0; left: 0;
+  border-bottom: 2px solid var(--electric);
+  border-left: 2px solid var(--electric);
+}
+
+/* ===== GLOW EFFECTS ===== */
+.glow-text-blue {
+  color: var(--electric);
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.7), 0 0 20px rgba(0, 212, 255, 0.3);
+}
+.glow-text-red {
+  color: var(--threat-critical);
+  text-shadow: 0 0 10px rgba(255, 23, 68, 0.7), 0 0 20px rgba(255, 23, 68, 0.3);
+}
+.glow-text-green {
+  color: var(--threat-low);
+  text-shadow: 0 0 10px rgba(0, 230, 118, 0.5);
+}
+.glow-border {
+  box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.2), inset 0 0 20px rgba(0, 212, 255, 0.03);
+}
+.glow-border-red {
+  box-shadow: 0 0 0 1px rgba(255, 23, 68, 0.3), inset 0 0 20px rgba(255, 23, 68, 0.05);
+}
+
+/* ===== THREAT LEVEL INDICATORS ===== */
+.threat-normal { 
+  color: #00BFA5;
+  text-shadow: 0 0 8px rgba(0, 191, 165, 0.6);
+}
+.threat-elevated { 
+  color: #FFD600;
+  text-shadow: 0 0 8px rgba(255, 214, 0, 0.6);
+}
+.threat-high { 
+  color: #FF6D00;
+  text-shadow: 0 0 8px rgba(255, 109, 0, 0.6);
+}
+.threat-critical { 
+  color: #FF1744;
+  text-shadow: 0 0 10px rgba(255, 23, 68, 0.8), 0 0 20px rgba(255, 23, 68, 0.4);
+}
+
+/* ===== ANIMATED PULSE RING (for hotspot markers) ===== */
+.pulse-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pulse-dot {
+  border-radius: 50%;
+  position: relative;
+  z-index: 2;
+}
+.pulse-ring {
+  position: absolute;
+  border-radius: 50%;
+  animation: pulseRing 2s ease-out infinite;
+}
+@keyframes pulseRing {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(3); opacity: 0; }
+}
+.pulse-ring-critical {
+  background: rgba(255, 23, 68, 0.4);
+  animation: pulseRing 1.2s ease-out infinite;
+}
+.pulse-ring-high {
+  background: rgba(255, 109, 0, 0.4);
+  animation: pulseRing 1.6s ease-out infinite;
+}
+.pulse-ring-medium {
+  background: rgba(255, 214, 0, 0.3);
+}
+.pulse-ring-low {
+  background: rgba(0, 230, 118, 0.3);
+}
+
+/* ===== SCAN LINE ANIMATION ===== */
+.scan-container {
+  position: relative;
+  overflow: hidden;
+}
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.6), transparent);
+  animation: scanMove 4s linear infinite;
+  z-index: 10;
+  pointer-events: none;
+}
+@keyframes scanMove {
+  0% { top: 0%; opacity: 0; }
+  5% { opacity: 1; }
+  95% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+@keyframes scanHoriz {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ===== DATA GRID / TABLE ===== */
+.data-row {
+  border-bottom: 1px solid rgba(0, 212, 255, 0.05);
+  transition: background 0.15s ease;
+}
+.data-row:hover {
+  background: rgba(0, 212, 255, 0.04);
+}
+
+/* ===== SIDEBAR NAV ===== */
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #4A6580;
+}
+.nav-item:hover {
+  background: rgba(0, 212, 255, 0.08);
+  color: var(--electric);
+}
+.nav-item.active {
+  background: rgba(0, 212, 255, 0.12);
+  color: var(--electric);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 25%;
+  width: 2px;
+  background: var(--electric);
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 0 8px var(--electric);
+}
+
+/* ===== STATUS BADGES ===== */
+.badge-critical { background: rgba(255, 23, 68, 0.15); color: #FF1744; border: 1px solid rgba(255, 23, 68, 0.3); }
+.badge-high { background: rgba(255, 109, 0, 0.15); color: #FF6D00; border: 1px solid rgba(255, 109, 0, 0.3); }
+.badge-medium { background: rgba(255, 214, 0, 0.12); color: #FFD600; border: 1px solid rgba(255, 214, 0, 0.25); }
+.badge-low { background: rgba(0, 230, 118, 0.12); color: #00E676; border: 1px solid rgba(0, 230, 118, 0.25); }
+.badge-active { background: rgba(0, 212, 255, 0.12); color: #00D4FF; border: 1px solid rgba(0, 212, 255, 0.25); }
+
+/* ===== LEAFLET OVERRIDES ===== */
+.leaflet-container {
+  background: #040810 !important;
+  font-family: 'Inter', sans-serif;
+}
+.leaflet-control-zoom {
+  border: 1px solid rgba(0, 212, 255, 0.2) !important;
+  background: rgba(8, 17, 32, 0.9) !important;
+}
+.leaflet-control-zoom a {
+  background: rgba(8, 17, 32, 0.9) !important;
+  color: var(--electric) !important;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1) !important;
+}
+.leaflet-control-zoom a:hover {
+  background: rgba(0, 212, 255, 0.1) !important;
+}
+.leaflet-popup-content-wrapper {
+  background: rgba(8, 17, 32, 0.97) !important;
+  border: 1px solid rgba(0, 212, 255, 0.2) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.15) !important;
+  color: var(--text-primary) !important;
+}
+.leaflet-popup-tip {
+  background: rgba(8, 17, 32, 0.97) !important;
+}
+.leaflet-popup-close-button {
+  color: var(--electric) !important;
+}
+.leaflet-attribution-flag { display: none !important; }
+.leaflet-control-attribution {
+  background: rgba(8, 17, 32, 0.7) !important;
+  color: #4A6580 !important;
+  font-size: 10px !important;
+}
+
+/* ===== RECHARTS OVERRIDES ===== */
+.recharts-cartesian-axis-tick-value {
+  fill: #4A6580 !important;
+  font-size: 11px;
+  font-family: 'Inter', sans-serif;
+}
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: rgba(0, 212, 255, 0.06) !important;
+}
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: rgba(8, 17, 32, 0.95) !important;
+  border: 1px solid rgba(0, 212, 255, 0.2) !important;
+  border-radius: 6px !important;
+}
+
+/* ===== SECTION HEADERS ===== */
+.section-header {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--electric);
+  opacity: 0.8;
+}
+
+/* ===== PROGRESS BARS ===== */
+.progress-track {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== ACTIVE PULSE DOT ===== */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00E676;
+  box-shadow: 0 0 6px #00E676;
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ===== GRID LINE OVERLAY (background texture) ===== */
+.grid-bg {
+  background-image: 
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ===== INTELLIGENCE PANEL ===== */
+.intel-card {
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.08), rgba(0, 212, 255, 0.04));
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.intel-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent);
+}
+
+/* ===== CHART CONTAINER ===== */
+.chart-wrapper {
+  background: linear-gradient(180deg, rgba(11, 18, 32, 0.8), rgba(8, 15, 28, 0.9));
+  border: 1px solid rgba(0, 212, 255, 0.08);
+  border-radius: 8px;
+}
+
+/* ===== BUTTON STYLES ===== */
+.btn-primary {
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.8), rgba(0, 212, 255, 0.6));
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 4px;
+  color: white;
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, rgba(0, 102, 255, 1), rgba(0, 212, 255, 0.8));
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-ghost:hover {
+  border-color: rgba(0, 212, 255, 0.5);
+  color: var(--electric);
+  background: rgba(0, 212, 255, 0.05);
+}
+
+/* ===== INPUT STYLE ===== */
+.cmd-input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.cmd-input:focus {
+  border-color: rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
+}
+.cmd-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ===== SELECT DROPDOWN ===== */
+select.cmd-input option {
+  background: #0B1220;
+  color: var(--text-primary);
+}
+
+/* ===== TICKER / LIVE TEXT SCROLL ===== */
+.ticker-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+}
+.ticker-content {
+  display: inline-block;
+  animation: ticker 30s linear infinite;
+}
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ===== MAP CUSTOM MARKERS ===== */
+.custom-marker {
+  border: none !important;
+  background: transparent !important;
+}
+.hotspot-pulse-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== BOTTOM PANEL ===== */
+.bottom-panel {
+  background: linear-gradient(180deg, rgba(8, 17, 32, 0.98) 0%, rgba(5, 12, 24, 0.99) 100%);
+  border-top: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+/* ===== TOOLTIP ===== */
+.tooltip-content {
+  background: rgba(8, 17, 32, 0.98);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ===== UTILITY ===== */
+.text-electric { color: var(--electric); }
+.text-plasma { color: var(--plasma); }
+.font-orbitron { font-family: 'Orbitron', monospace; }
+.font-mono-code { font-family: 'JetBrains Mono', monospace; }
+.border-electric { border-color: rgba(0, 212, 255, 0.2); }
+.bg-navy { background-color: var(--navy-900); }
+.bg-panel { background: var(--panel-bg); }
+
+/* ===== PAGE TRANSITIONS ===== */
+.page-enter {
+  animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== LAYER CONTROL CUSTOM ===== */
+.layer-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  background: transparent;
+  color: var(--text-secondary);
+  width: 100%;
+  text-align: left;
+}
+.layer-btn:hover {
+  background: rgba(0, 212, 255, 0.05);
+  color: var(--text-primary);
+}
+.layer-btn.active {
+  border-color: rgba(0, 212, 255, 0.2);
+  color: var(--electric);
+  background: rgba(0, 212, 255, 0.06);
+}
+.layer-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}

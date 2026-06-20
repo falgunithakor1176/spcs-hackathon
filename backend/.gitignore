@@ -1,0 +1,8 @@
+# .env
+# Never commit this file to version control
+.env
+__pycache__/
+*.pyc
+*.pyo
+venv/
+data/seed/*.csv
