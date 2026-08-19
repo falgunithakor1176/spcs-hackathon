@@ -10,10 +10,14 @@ import CyberCrime from './pages/CyberCrime';
 import PatrolRouting from './pages/PatrolRouting';
 import Alerts from './pages/Alerts';
 import Settings from './pages/Settings';
+import Simulation from './pages/Simulation';
+import AuditLog from './pages/AuditLog';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <DataProvider>{children}</DataProvider> : <Navigate to="/login" replace />;
+  return isAuthenticated
+    ? <DataProvider>{children}</DataProvider>
+    : <Navigate to="/login" replace />;
 }
 
 function AppRoutes() {
@@ -29,12 +33,14 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="/command" replace />} />
-        <Route path="command"   element={<CommandCenter />} />
-        <Route path="analytics" element={<CrimeAnalytics />} />
+        <Route path="command"    element={<CommandCenter />} />
+        <Route path="analytics"  element={<CrimeAnalytics />} />
         <Route path="cybercrime" element={<CyberCrime />} />
-        <Route path="patrol"    element={<PatrolRouting />} />
-        <Route path="alerts"    element={<Alerts />} />
-        <Route path="settings"  element={<Settings />} />
+        <Route path="patrol"     element={<PatrolRouting />} />
+        <Route path="alerts"     element={<Alerts />} />
+        <Route path="simulation" element={<Simulation />} />
+        <Route path="audit-log"  element={<AuditLog />} />
+        <Route path="settings"   element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/command" replace />} />
     </Routes>

@@ -2,7 +2,7 @@ import { useData } from '../../context/DataContext';
 import { AREAS, CRIME_TYPES } from '../../data/mockData';
 import { getCrimesByType, getCrimesByArea, getCrimesByMonth, getCrimesByHour, getCyberByType, getTotalAmountLost } from '../../data/analyticsUtils';
 import React, { useState, useEffect } from 'react';
-import { Brain, Bell, TrendingUp, MapPin, Users, Zap, ChevronRight } from 'lucide-react';
+import { Brain, Bell, TrendingUp, MapPin, Users, Zap, ChevronRight, Target } from 'lucide-react';
 
 const RISK_COLORS = {
   Critical: '#FF1744', High: '#FF6D00', Medium: '#FFD600', Low: '#00E676',
@@ -56,11 +56,11 @@ function AIIntelligenceCard({ pred, index }) {
       <div className="grid grid-cols-2 gap-1 mb-2">
         <div className="text-center p-1 rounded" style={{ background: 'rgba(0,0,0,0.2)' }}>
           <div className="font-orbitron font-bold" style={{ color, fontSize: 13 }}>{pred.predicted_crimes}</div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>PREDICTED</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>CLUSTERED</div>
         </div>
         <div className="text-center p-1 rounded" style={{ background: 'rgba(0,0,0,0.2)' }}>
           <div className="font-orbitron font-bold" style={{ color: 'var(--electric)', fontSize: 13 }}>{pred.confidence}%</div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>CONFIDENCE</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 9 }}>DENSITY SCORE</div>
         </div>
       </div>
 
@@ -148,9 +148,42 @@ function RiskScoreTicker({ hotspots }) {
   );
 }
 
+const FUTURE_RISK_COLORS = {
+  Critical: '#FF1744', High: '#FF6D00', Medium: '#FFD600', Low: '#00E676',
+};
+
+function FutureRiskRow({ row, rank }) {
+  const color = FUTURE_RISK_COLORS[row.combined_risk] || '#aaa';
+  const score = Math.round((row.combined_risk_score || 0) * 100);
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0',
+      borderBottom: '1px solid rgba(255,255,255,0.03)',
+    }}>
+      <span style={{
+        fontFamily: 'Orbitron', fontSize: 9, color, fontWeight: 700,
+        width: 16, textAlign: 'center',
+      }}>#{rank}</span>
+      <span style={{ flex: 1, fontSize: 10, color: '#E8F4FD', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {row.area}
+      </span>
+      <span style={{
+        fontSize: 8, fontFamily: 'Orbitron', color,
+        background: `${color}15`, border: `1px solid ${color}30`,
+        padding: '1px 5px', borderRadius: 2, flexShrink: 0,
+      }}>{row.combined_risk?.toUpperCase()}</span>
+      <span style={{ fontFamily: 'Orbitron', fontSize: 10, color, width: 22, textAlign: 'right' }}>{score}</span>
+    </div>
+  );
+}
+
 export default function RightPanel() {
-  const { crimes, hotspots, patrols, routes, cybercrime, alerts, predictions, loading } = useData();
+  const { crimes, hotspots, patrols, routes, cybercrime, alerts, predictions, areaIntelligence, loading } = useData();
   if (loading) return <div>Loading...</div>;
+
+  const topAreas = [...(areaIntelligence || [])]
+    .sort((a, b) => a.patrol_priority - b.patrol_priority)
+    .slice(0, 3);
 
   return (
     <div className="flex flex-col h-full overflow-hidden panel-surface animate-slide-in-right"
@@ -158,7 +191,7 @@ export default function RightPanel() {
 
       {/* AI Intelligence Panel */}
       <div className="flex-shrink-0 p-3 border-b" style={{ borderColor: 'rgba(0,212,255,0.05)' }}>
-        <SectionHeader icon={Brain} title="AI Intelligence" />
+        <SectionHeader icon={Brain} title="Spatial Risk Analysis" />
 
         {/* Decorative scan effect */}
         <div className="scan-container rounded mb-2" style={{ height: 2 }}>
@@ -177,14 +210,31 @@ export default function RightPanel() {
 
         <button className="w-full mt-2 py-1.5 rounded flex items-center justify-center gap-1.5 btn-ghost">
           <ChevronRight size={11} />
-          <span style={{ fontSize: 10, fontFamily: 'Orbitron' }}>VIEW ALL PREDICTIONS</span>
+          <span style={{ fontSize: 10, fontFamily: 'Orbitron' }}>VIEW ALL RISK ANALYSIS</span>
         </button>
       </div>
 
-      {/* Live Risk Scores */}
+      {/* Risk Scores */}
       <div className="flex-shrink-0 p-3 border-b" style={{ borderColor: 'rgba(0,212,255,0.05)' }}>
-        <SectionHeader icon={TrendingUp} title="Live Risk Scores" />
+        <SectionHeader icon={TrendingUp} title="Risk Scores" />
         <RiskScoreTicker hotspots={hotspots} />
+      </div>
+
+      {/* Future Risk Forecast (Engine 3) */}
+      <div className="flex-shrink-0 p-3 border-b" style={{ borderColor: 'rgba(0,212,255,0.05)' }}>
+        <SectionHeader icon={Target} title="Future Risk Forecast" />
+        <div style={{ fontSize: 9, color: 'var(--text-muted)', marginBottom: 6 }}>
+          Engine 3 · Next-month patrol priority
+        </div>
+        {topAreas.length === 0 ? (
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontStyle: 'italic' }}>No forecast data yet</div>
+        ) : (
+          <div>
+            {topAreas.map(row => (
+              <FutureRiskRow key={row.area} row={row} rank={row.patrol_priority} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Alert Feed */}

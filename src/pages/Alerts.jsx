@@ -73,15 +73,15 @@ function AlertRow({ alert, onAck }) {
 export default function Alerts() {
   const { crimes, hotspots, patrols, routes, cybercrime, alerts: initialAlerts, predictions, loading } = useData();
   const [alerts, setAlerts] = useState([]);
+  const [filterType, setFilterType] = useState('all');
+  const [filterAck, setFilterAck] = useState('all');
+  const [search, setSearch] = useState('');
 
   React.useEffect(() => {
     if (initialAlerts) setAlerts(initialAlerts);
   }, [initialAlerts]);
   
   if (loading) return <div>Loading...</div>;
-  const [filterType, setFilterType] = useState('all');
-  const [filterAck, setFilterAck] = useState('all');
-  const [search, setSearch] = useState('');
 
   const filtered = alerts.filter(a => {
     if (filterType !== 'all' && a.type !== filterType) return false;

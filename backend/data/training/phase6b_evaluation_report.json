@@ -1,0 +1,493 @@
+{
+  "physical": {
+    "model_comparison": [
+      {
+        "set": "Train",
+        "MAE": 5.2511,
+        "RMSE": 6.8756,
+        "R2": 0.0,
+        "n_samples": 642,
+        "model": "Mean Predictor"
+      },
+      {
+        "set": "Validation",
+        "MAE": 9.5002,
+        "RMSE": 12.4796,
+        "R2": -0.1128,
+        "n_samples": 175,
+        "model": "Mean Predictor"
+      },
+      {
+        "set": "Train",
+        "MAE": 2.9764,
+        "RMSE": 4.0678,
+        "R2": 0.65,
+        "n_samples": 642,
+        "model": "Linear Regression"
+      },
+      {
+        "set": "Validation",
+        "MAE": 7.8983,
+        "RMSE": 10.1136,
+        "R2": 0.2692,
+        "n_samples": 175,
+        "model": "Linear Regression"
+      },
+      {
+        "set": "Train",
+        "MAE": 1.8252,
+        "RMSE": 2.5999,
+        "R2": 0.857,
+        "n_samples": 642,
+        "model": "Random Forest"
+      },
+      {
+        "set": "Validation",
+        "MAE": 7.6661,
+        "RMSE": 9.9589,
+        "R2": 0.2914,
+        "n_samples": 175,
+        "model": "Random Forest"
+      }
+    ],
+    "top_15_features": [
+      [
+        "crime_count",
+        0.11677
+      ],
+      [
+        "area_base_weight",
+        0.111095
+      ],
+      [
+        "rolling_avg_3m",
+        0.106829
+      ],
+      [
+        "rolling_avg_6m",
+        0.102659
+      ],
+      [
+        "crime_count_lag_12",
+        0.06533
+      ],
+      [
+        "crime_count_lag_1",
+        0.059171
+      ],
+      [
+        "crime_count_lag_2",
+        0.051836
+      ],
+      [
+        "month_cos",
+        0.051166
+      ],
+      [
+        "n_crime_types",
+        0.043066
+      ],
+      [
+        "crime_count_lag_3",
+        0.037448
+      ],
+      [
+        "quarter",
+        0.035399
+      ],
+      [
+        "month_sin",
+        0.024785
+      ],
+      [
+        "rolling_std_3m",
+        0.021504
+      ],
+      [
+        "zone_East",
+        0.017685
+      ],
+      [
+        "mom_change",
+        0.014627
+      ]
+    ],
+    "overfit_gap": 0.5656,
+    "val_sample_predictions": [
+      {
+        "area": "Ambavadi",
+        "month": 1,
+        "actual": 9,
+        "predicted": 8.0
+      },
+      {
+        "area": "Ambavadi",
+        "month": 2,
+        "actual": 8,
+        "predicted": 9.1
+      },
+      {
+        "area": "Ambavadi",
+        "month": 3,
+        "actual": 16,
+        "predicted": 7.5
+      },
+      {
+        "area": "Ambavadi",
+        "month": 4,
+        "actual": 11,
+        "predicted": 10.2
+      },
+      {
+        "area": "Ambavadi",
+        "month": 5,
+        "actual": 10,
+        "predicted": 9.3
+      },
+      {
+        "area": "Ambavadi",
+        "month": 6,
+        "actual": 1,
+        "predicted": 9.3
+      },
+      {
+        "area": "Asarwa",
+        "month": 1,
+        "actual": 18,
+        "predicted": 20.2
+      },
+      {
+        "area": "Asarwa",
+        "month": 2,
+        "actual": 28,
+        "predicted": 20.6
+      },
+      {
+        "area": "Asarwa",
+        "month": 3,
+        "actual": 27,
+        "predicted": 20.4
+      },
+      {
+        "area": "Asarwa",
+        "month": 4,
+        "actual": 33,
+        "predicted": 23.7
+      },
+      {
+        "area": "Asarwa",
+        "month": 5,
+        "actual": 21,
+        "predicted": 21.3
+      },
+      {
+        "area": "Asarwa",
+        "month": 6,
+        "actual": 1,
+        "predicted": 22.2
+      },
+      {
+        "area": "Bapunagar",
+        "month": 1,
+        "actual": 31,
+        "predicted": 23.1
+      },
+      {
+        "area": "Bapunagar",
+        "month": 2,
+        "actual": 49,
+        "predicted": 22.2
+      },
+      {
+        "area": "Bapunagar",
+        "month": 3,
+        "actual": 35,
+        "predicted": 24.6
+      },
+      {
+        "area": "Bapunagar",
+        "month": 4,
+        "actual": 52,
+        "predicted": 24.8
+      },
+      {
+        "area": "Bapunagar",
+        "month": 5,
+        "actual": 27,
+        "predicted": 25.2
+      },
+      {
+        "area": "Bapunagar",
+        "month": 6,
+        "actual": 1,
+        "predicted": 24.5
+      },
+      {
+        "area": "Bapunagar",
+        "month": 7,
+        "actual": 1,
+        "predicted": 18.5
+      },
+      {
+        "area": "Bodakdev",
+        "month": 1,
+        "actual": 8,
+        "predicted": 7.6
+      }
+    ]
+  },
+  "cyber": {
+    "model_comparison": [
+      {
+        "set": "Train",
+        "MAE": 0.9834,
+        "RMSE": 1.3224,
+        "R2": 0.0,
+        "n_samples": 368,
+        "model": "Mean Predictor"
+      },
+      {
+        "set": "Validation",
+        "MAE": 0.9639,
+        "RMSE": 1.3471,
+        "R2": -0.0153,
+        "n_samples": 214,
+        "model": "Mean Predictor"
+      },
+      {
+        "set": "Train",
+        "MAE": 0.917,
+        "RMSE": 1.2381,
+        "R2": 0.1235,
+        "n_samples": 368,
+        "model": "Linear Regression"
+      },
+      {
+        "set": "Validation",
+        "MAE": 0.9176,
+        "RMSE": 1.2596,
+        "R2": 0.1123,
+        "n_samples": 214,
+        "model": "Linear Regression"
+      },
+      {
+        "set": "Train",
+        "MAE": 0.6174,
+        "RMSE": 0.8411,
+        "R2": 0.5955,
+        "n_samples": 368,
+        "model": "RF Regressor"
+      },
+      {
+        "set": "Validation",
+        "MAE": 0.9135,
+        "RMSE": 1.2692,
+        "R2": 0.0988,
+        "n_samples": 214,
+        "model": "RF Regressor"
+      }
+    ],
+    "top_15_features": [
+      [
+        "area_base_weight",
+        0.109913
+      ],
+      [
+        "month_cos",
+        0.088032
+      ],
+      [
+        "amount_lag_1",
+        0.077046
+      ],
+      [
+        "total_amount_lost",
+        0.067108
+      ],
+      [
+        "cyber_count_lag_3",
+        0.060651
+      ],
+      [
+        "max_amount_lost",
+        0.058313
+      ],
+      [
+        "cyber_rolling_avg_3m",
+        0.057863
+      ],
+      [
+        "avg_amount_lost",
+        0.055479
+      ],
+      [
+        "month_sin",
+        0.049139
+      ],
+      [
+        "cyber_count_lag_2",
+        0.047516
+      ],
+      [
+        "cyber_mom_change",
+        0.042167
+      ],
+      [
+        "cyber_count_lag_1",
+        0.035316
+      ],
+      [
+        "is_festival_month",
+        0.035075
+      ],
+      [
+        "cyber_count",
+        0.031393
+      ],
+      [
+        "n_fraud_types",
+        0.029869
+      ]
+    ],
+    "overfit_gap": 0.4967,
+    "risk_thresholds": {
+      "q25": 1.0,
+      "q50": 1.0,
+      "q75": 3.0
+    },
+    "regression_derived_risk": {
+      "accuracy": 0.4346,
+      "f1": 0.2861
+    },
+    "classifier_comparison": {
+      "train_accuracy": 0.9321,
+      "val_accuracy": 0.4907,
+      "train_f1": 0.9331,
+      "val_f1": 0.4785,
+      "classification_report": "              precision    recall  f1-score   support\n\n    Critical       0.33      0.48      0.39        29\n        High       0.48      0.30      0.37        92\n         Low       0.55      0.68      0.61        93\n\n    accuracy                           0.49       214\n   macro avg       0.46      0.49      0.46       214\nweighted avg       0.49      0.49      0.48       214\n"
+    },
+    "recommendation": "classification",
+    "val_sample_predictions": [
+      {
+        "area": "Ambavadi",
+        "month": 1,
+        "actual": 1,
+        "predicted": 1.9
+      },
+      {
+        "area": "Ambavadi",
+        "month": 3,
+        "actual": 1,
+        "predicted": 2.0
+      },
+      {
+        "area": "Ambavadi",
+        "month": 4,
+        "actual": 1,
+        "predicted": 1.4
+      },
+      {
+        "area": "Ambavadi",
+        "month": 6,
+        "actual": 1,
+        "predicted": 1.6
+      },
+      {
+        "area": "Ambavadi",
+        "month": 8,
+        "actual": 1,
+        "predicted": 1.3
+      },
+      {
+        "area": "Ambavadi",
+        "month": 9,
+        "actual": 1,
+        "predicted": 1.7
+      },
+      {
+        "area": "Ambavadi",
+        "month": 10,
+        "actual": 2,
+        "predicted": 1.4
+      },
+      {
+        "area": "Ambavadi",
+        "month": 11,
+        "actual": 1,
+        "predicted": 1.7
+      },
+      {
+        "area": "Asarwa",
+        "month": 1,
+        "actual": 1,
+        "predicted": 3.0
+      },
+      {
+        "area": "Asarwa",
+        "month": 2,
+        "actual": 3,
+        "predicted": 2.8
+      },
+      {
+        "area": "Asarwa",
+        "month": 3,
+        "actual": 4,
+        "predicted": 2.7
+      },
+      {
+        "area": "Asarwa",
+        "month": 4,
+        "actual": 4,
+        "predicted": 2.6
+      },
+      {
+        "area": "Asarwa",
+        "month": 5,
+        "actual": 1,
+        "predicted": 2.3
+      },
+      {
+        "area": "Asarwa",
+        "month": 6,
+        "actual": 1,
+        "predicted": 2.6
+      },
+      {
+        "area": "Asarwa",
+        "month": 7,
+        "actual": 2,
+        "predicted": 2.2
+      },
+      {
+        "area": "Asarwa",
+        "month": 8,
+        "actual": 2,
+        "predicted": 1.8
+      },
+      {
+        "area": "Asarwa",
+        "month": 10,
+        "actual": 3,
+        "predicted": 2.2
+      },
+      {
+        "area": "Asarwa",
+        "month": 11,
+        "actual": 1,
+        "predicted": 2.0
+      },
+      {
+        "area": "Bapunagar",
+        "month": 1,
+        "actual": 3,
+        "predicted": 2.9
+      },
+      {
+        "area": "Bapunagar",
+        "month": 2,
+        "actual": 6,
+        "predicted": 2.8
+      }
+    ]
+  }
+}

@@ -40,23 +40,56 @@ def _haversine_m(lat1, lon1, lat2, lon2):
     return 2 * np.arcsin(np.sqrt(a)) * 6371000
 
 
+# Analysis window constants (used for both clustering and trend comparison)
+ANALYSIS_WINDOW_START = '2025-02-26'
+ANALYSIS_WINDOW_END   = '2025-03-28'
+PREV_WINDOW_START     = '2025-01-27'
+PREV_WINDOW_END       = '2025-02-25'
+
+
+def _get_area_prev_count(primary_area):
+    """
+    Query the crime count for a given area in the preceding 30-day window
+    (2025-01-27 to 2025-02-25) to compute a real trend percentage.
+    Returns 0 if no data is found for that area in the prior window.
+    """
+    result = db.session.execute(db.text("""
+        SELECT COUNT(*) FROM crimes
+        WHERE area = :area
+          AND TO_TIMESTAMP(timestamp, 'DD-MM-YYYY HH24:MI') >= :start
+          AND TO_TIMESTAMP(timestamp, 'DD-MM-YYYY HH24:MI') <  :end
+    """), {'area': primary_area, 'start': PREV_WINDOW_START, 'end': PREV_WINDOW_END}).scalar()
+    return int(result or 0)
+
+
+def _compute_trend(current_count, prev_count):
+    """
+    Compute a percentage change string between two windows.
+    Returns 'New' if no prior data exists, otherwise '+X%' or '-X%'.
+    """
+    if prev_count == 0:
+        return 'New'
+    pct = ((current_count - prev_count) / prev_count) * 100
+    return f'+{pct:.0f}%' if pct >= 0 else f'{pct:.0f}%'
+
+
 def run_dbscan_engine():
     """
     Execute the full DBSCAN pipeline:
-    1. Fetch crimes from the dense 30-day window
+    1. Fetch crimes from the dense 30-day analysis window
     2. Run DBSCAN clustering
-    3. TRUNCATE & INSERT new hotspots
+    3. TRUNCATE & INSERT new hotspots (with real trend vs preceding window)
     4. Generate alerts for High/Critical hotspots
     5. Return summary metrics
     """
 
-    # Step 1: Fetch crimes from the densest 30-day window
+    # Step 1: Fetch crimes from the dense 30-day analysis window
     crimes = db.session.execute(db.text("""
         SELECT crime_id, crime_type, severity, latitude, longitude, area
         FROM crimes
-        WHERE TO_TIMESTAMP(timestamp, 'DD-MM-YYYY HH24:MI') >= '2025-02-26'
-          AND TO_TIMESTAMP(timestamp, 'DD-MM-YYYY HH24:MI') <= '2025-03-28'
-    """)).fetchall()
+        WHERE TO_TIMESTAMP(timestamp, 'DD-MM-YYYY HH24:MI') >= :start
+          AND TO_TIMESTAMP(timestamp, 'DD-MM-YYYY HH24:MI') <= :end
+    """), {'start': ANALYSIS_WINDOW_START, 'end': ANALYSIS_WINDOW_END}).fetchall()
 
     if not crimes:
         return {'status': 'error', 'message': 'No crimes found in the analysis window.'}
@@ -88,7 +121,10 @@ def run_dbscan_engine():
     now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
 
     unique_clusters = set(labels)
-    unique_clusters.discard(-1)  # Remove noise label
+    unique_clusters.discard(-1)  # Remove noise; compute max cluster size for density normalisation
+    max_cluster_size = max(
+        [int((labels == cid).sum()) for cid in unique_clusters], default=1
+    )
 
     for cluster_id in sorted(unique_clusters):
         mask = labels == cluster_id
@@ -129,6 +165,13 @@ def run_dbscan_engine():
         primary_crime = Counter(cluster_crimes).most_common(1)[0][0]
         zone = AREA_ZONES.get(primary_area, 'Unknown')
 
+        # --- Real trend: compare current window vs preceding 30-day window for this area ---
+        prev_count = _get_area_prev_count(primary_area)
+        trend = _compute_trend(crime_count, prev_count)
+
+        # --- Cluster Density Score: normalized 0-100 based on largest cluster this run ---
+        density_score = min(100, int((crime_count / max(max_cluster_size, 1)) * 100))
+
         hs_id = f'HS-ML-{cluster_id + 1:03d}'
 
         hotspot = Hotspot(
@@ -141,7 +184,7 @@ def run_dbscan_engine():
             score=score,
             crimes=crime_count,
             primary_type=primary_crime,
-            trend='+12%',
+            trend=trend,
             emerged=now_str,
             zone=zone
         )
@@ -216,14 +259,20 @@ def run_dbscan_engine():
 
     # Insert final aggregated predictions
     for area, data in predictions_by_area.items():
-        deployment_strategy = f"Deploy {min(4, max(1, data['total_crimes'] // 3))} units + PCR van" if data['risk_level'] in ['High', 'Critical'] else "Routine patrol + Community outreach"
+        deployment_strategy = (
+            f"Deploy {min(4, max(1, data['total_crimes'] // 3))} units + PCR van"
+            if data['risk_level'] in ['High', 'Critical']
+            else "Routine patrol + Community outreach"
+        )
+        # density_score: normalized cluster size vs largest cluster this run (0–100)
+        area_density_score = min(100, int((data['total_crimes'] / max(max_cluster_size, 1)) * 100))
         prediction = Prediction(
             area=data['area'],
             risk_level=data['risk_level'],
             score=data['score'],
-            predicted_crimes=int(data['total_crimes'] * 1.2),
+            predicted_crimes=int(data['total_crimes']),   # Actual clustered count — no multiplier
             top_crime=data['top_crime'],
-            confidence=str(min(98, max(60, 40 + data['total_crimes'] * 5))),
+            confidence=str(area_density_score),           # Renamed semantically to Density Score
             deployment=deployment_strategy,
             lat=data['lat'],
             lng=data['lng']

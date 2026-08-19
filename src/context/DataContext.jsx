@@ -3,6 +3,7 @@ import { getCrimes, getCybercrimes } from '../services/crimeService';
 import { getHotspots, getPredictions } from '../services/hotspotService';
 import { getPatrolUnits, getPatrolRoutes } from '../services/patrolService';
 import { getAlerts } from '../services/alertService';
+import { getAreaIntelligence, getEngine2Forecasts, getEngineConfig } from '../services/forecastService';
 import { useAuth } from './AuthContext';
 
 const DataContext = createContext(null);
@@ -12,6 +13,7 @@ export function DataProvider({ children }) {
   const [data, setData] = useState({
     crimes: [], cybercrime: [], patrols: [], routes: [],
     hotspots: [], alerts: [], predictions: [],
+    areaIntelligence: [], forecasts: {}, engineConfig: {},
     loading: true, error: null
   });
   const [riskIndex, setRiskIndex] = useState(72);
@@ -28,21 +30,42 @@ export function DataProvider({ children }) {
 
   const fetchAll = useCallback(async () => {
     setData(prev => ({ ...prev, loading: true }));
+    
+    const handleAuthError = (err) => {
+      // Token refresh is handled automatically by the axios interceptor in api.js.
+      // We no longer call logout() here — a 401 during a background poll should not
+      // kick the user out. The interceptor will refresh the token and retry silently.
+      // Only log for debugging purposes.
+      if (err.response && err.response.status !== 401 && err.response.status !== 422) {
+        console.error("API Fetch Error:", err);
+      }
+      return [];
+    };
+
     try {
-      const [crimes, cyber, patrols, routes, hotspots, alerts, predictions] = await Promise.all([
-        getCrimes(), getCybercrimes(), getPatrolUnits(), getPatrolRoutes(),
-        getHotspots(), getAlerts(), getPredictions()
+      const [crimes, cyber, patrols, routes, hotspots, alerts, predictions,
+             areaIntelligence, forecasts, engineConfig] = await Promise.all([
+        getCrimes().catch(handleAuthError),
+        getCybercrimes().catch(handleAuthError),
+        getPatrolUnits().catch(handleAuthError),
+        getPatrolRoutes().catch(handleAuthError),
+        getHotspots().catch(handleAuthError),
+        getAlerts().catch(handleAuthError),
+        getPredictions().catch(handleAuthError),
+        getAreaIntelligence().catch(() => []),
+        getEngine2Forecasts().catch(() => ({})),
+        getEngineConfig().catch(() => ({})),
       ]);
-      
-      setData({ crimes, cybercrime: cyber, patrols, routes, hotspots, alerts, predictions, loading: false, error: null });
+      setData({
+        crimes, cybercrime: cyber, patrols, routes, hotspots, alerts, predictions,
+        areaIntelligence, forecasts, engineConfig,
+        loading: false, error: null
+      });
     } catch (err) {
       console.error("DataContext fetch error:", err);
       setData(prev => ({ ...prev, loading: false, error: err.message }));
-      if (err.response && (err.response.status === 401 || err.response.status === 422)) {
-        logout(); // Force login on invalid token
-      }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, logout]);
 
   useEffect(() => {
     if (!isAuthenticated) {

@@ -5,8 +5,14 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const saved = sessionStorage.getItem('spcs_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = sessionStorage.getItem('spcs_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (err) {
+      console.error("Error parsing stored user session:", err);
+      sessionStorage.removeItem('spcs_user');
+      return null;
+    }
   });
 
   const login = async (username, password) => {

@@ -70,7 +70,7 @@ export default function BottomPanel() {
         {/* Right side — live indicator */}
         <div className="ml-auto flex items-center gap-2">
           <div className="live-dot" />
-          <span style={{ color: '#00E676', fontSize: 9, fontFamily: 'JetBrains Mono' }}>LIVE DATA</span>
+          <span style={{ color: '#00E676', fontSize: 9, fontFamily: 'JetBrains Mono' }}>AUTO-REFRESH</span>
         </div>
       </div>
 

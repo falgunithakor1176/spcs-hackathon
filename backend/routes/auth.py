@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
+from services.audit_service import log_action
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -31,6 +32,8 @@ def login():
 
     access_token = create_access_token(identity=username, additional_claims=claims)
     refresh_token = create_refresh_token(identity=username, additional_claims=claims)
+
+    log_action(username, user['role'], 'LOGIN', '/api/auth/login', f"Badge: {user['badge']}")
 
     return jsonify(
         access_token=access_token,

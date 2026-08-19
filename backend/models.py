@@ -250,3 +250,189 @@ class PatrolRoute(db.Model):
             'coverage':    self.coverage,
             'eta_minutes': self.eta_minutes,
         }
+
+
+# ─── PHASE 6C: ENGINE 2 & ENGINE 3 TABLES ────────────────────────────────────
+
+class CrimeForecast(db.Model):
+    """
+    Engine 2 output — Physical crime count prediction per area per month.
+    Populated by prediction_engine.py. Used by the Correlation Engine and API.
+    """
+    __tablename__ = 'crime_forecasts'
+
+    id                 = Column(Integer, primary_key=True, autoincrement=True)
+    area               = Column(String(100), nullable=False, index=True)
+    zone               = Column(String(50))
+    forecast_year      = Column(Integer, nullable=False)
+    forecast_month     = Column(Integer, nullable=False)
+    predicted_count    = Column(Float, nullable=False)
+    physical_risk      = Column(String(20), nullable=False)   # Low/Medium/High/Critical
+    generated_at       = Column(DateTime, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id':              self.id,
+            'area':            self.area,
+            'zone':            self.zone,
+            'forecast_year':   self.forecast_year,
+            'forecast_month':  self.forecast_month,
+            'predicted_count': self.predicted_count,
+            'physical_risk':   self.physical_risk,
+            'generated_at':    self.generated_at.isoformat() if self.generated_at else None,
+        }
+
+
+class CyberForecast(db.Model):
+    """
+    Engine 2 output — Cybercrime risk category per area per month.
+    Populated by prediction_engine.py. Used by the Correlation Engine and API.
+    """
+    __tablename__ = 'cyber_forecasts'
+
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    area            = Column(String(100), nullable=False, index=True)
+    zone            = Column(String(50))
+    forecast_year   = Column(Integer, nullable=False)
+    forecast_month  = Column(Integer, nullable=False)
+    cyber_risk      = Column(String(20), nullable=False)    # Low/Medium/High/Critical
+    generated_at    = Column(DateTime, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id':             self.id,
+            'area':           self.area,
+            'zone':           self.zone,
+            'forecast_year':  self.forecast_year,
+            'forecast_month': self.forecast_month,
+            'cyber_risk':     self.cyber_risk,
+            'generated_at':   self.generated_at.isoformat() if self.generated_at else None,
+        }
+
+
+class AreaIntelligence(db.Model):
+    """
+    Engine 3 (Correlation Engine) output — Combined risk per area per month.
+    Merges Engine 1 (DBSCAN spatial), Engine 2 physical & cyber predictions.
+    Heuristic weights are configurable domain-informed parameters, not fixed AI.
+    """
+    __tablename__ = 'area_intelligence'
+
+    id                    = Column(Integer, primary_key=True, autoincrement=True)
+    area                  = Column(String(100), nullable=False, index=True)
+    zone                  = Column(String(50))
+    forecast_year         = Column(Integer, nullable=False)
+    forecast_month        = Column(Integer, nullable=False)
+
+    # Engine 1 (DBSCAN) inputs
+    hotspot_count         = Column(Integer, default=0)
+    hotspot_risk          = Column(String(20))     # worst risk level from active hotspots
+
+    # Engine 2 inputs
+    physical_risk         = Column(String(20))     # from CrimeForecast
+    predicted_count       = Column(Float)
+    cyber_risk            = Column(String(20))     # from CyberForecast
+
+    # Engine 3 output
+    combined_risk         = Column(String(20), nullable=False)   # Low/Medium/High/Critical
+    combined_risk_score   = Column(Float, nullable=False)        # 0.0 – 1.0
+    patrol_priority       = Column(Integer, nullable=False)      # 1 (highest) – 27 (lowest)
+    top_contributing_engine = Column(String(50))                 # which engine drove risk
+
+    generated_at          = Column(DateTime, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id':                       self.id,
+            'area':                     self.area,
+            'zone':                     self.zone,
+            'forecast_year':            self.forecast_year,
+            'forecast_month':           self.forecast_month,
+            'hotspot_count':            self.hotspot_count,
+            'hotspot_risk':             self.hotspot_risk,
+            'physical_risk':            self.physical_risk,
+            'predicted_count':          self.predicted_count,
+            'cyber_risk':               self.cyber_risk,
+            'combined_risk':            self.combined_risk,
+            'combined_risk_score':      self.combined_risk_score,
+            'patrol_priority':          self.patrol_priority,
+            'top_contributing_engine':  self.top_contributing_engine,
+            'generated_at':             self.generated_at.isoformat() if self.generated_at else None,
+        }
+
+
+# ─── AUDIT LOG TABLE ──────────────────────────────────────────────────────────
+
+class AuditLog(db.Model):
+    """
+    Tracks all significant system actions for compliance and accountability.
+    Written by audit_service.log_action() — never modified after insertion.
+    """
+    __tablename__ = 'audit_logs'
+
+    id          = Column(Integer, primary_key=True, autoincrement=True)
+    username    = Column(String(100), nullable=False)
+    role        = Column(String(50))
+    action      = Column(String(100), nullable=False)   # LOGIN, ENGINE_RUN, EXPORT, ACK_ALERT etc.
+    resource    = Column(String(100))                   # which API / page / engine
+    detail      = Column(Text)                          # extra context
+    ip_address  = Column(String(50))
+    timestamp   = Column(DateTime, nullable=False)
+
+    def to_dict(self):
+        return {
+            'id':         self.id,
+            'username':   self.username,
+            'role':       self.role,
+            'action':     self.action,
+            'resource':   self.resource,
+            'detail':     self.detail,
+            'ip_address': self.ip_address,
+            'timestamp':  self.timestamp.isoformat() if self.timestamp else None,
+        }
+
+
+# ─── ACTIVE DISPATCH TABLE (Phase 7C) ─────────────────────────────────────────
+
+class ActiveDispatch(db.Model):
+    """
+    Tracks active patrol dispatches with their OSRM route geometry.
+    Created on dispatch, updated during simulated GPS tracking,
+    marked as Arrived when patrol reaches destination.
+    One active dispatch per patrol unit (unique constraint).
+    """
+    __tablename__ = 'active_dispatches'
+
+    id              = Column(Integer, primary_key=True, autoincrement=True)
+    patrol_id       = Column(String(50), nullable=False, unique=True)
+    hotspot_id      = Column(String(50), nullable=False)
+    alert_id        = Column(String(50))
+    route_geometry  = Column(Text, nullable=False)       # JSON: [[lat,lng], ...]
+    total_points    = Column(Integer, nullable=False)
+    current_index   = Column(Integer, nullable=False, default=0)
+    distance_km     = Column(Float)
+    eta_minutes     = Column(Integer)
+    status          = Column(String(50), nullable=False, default='Responding')
+    dispatched_at   = Column(DateTime, nullable=False)
+    arrived_at      = Column(DateTime)
+
+    def to_dict(self):
+        import json
+        try:
+            geometry = json.loads(self.route_geometry)
+        except Exception:
+            geometry = []
+        return {
+            'id':             self.id,
+            'patrol_id':      self.patrol_id,
+            'hotspot_id':     self.hotspot_id,
+            'alert_id':       self.alert_id,
+            'route_geometry':  geometry,
+            'total_points':   self.total_points,
+            'current_index':  self.current_index,
+            'distance_km':    self.distance_km,
+            'eta_minutes':    self.eta_minutes,
+            'status':         self.status,
+            'dispatched_at':  self.dispatched_at.isoformat() if self.dispatched_at else None,
+            'arrived_at':     self.arrived_at.isoformat() if self.arrived_at else None,
+        }

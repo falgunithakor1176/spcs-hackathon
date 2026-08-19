@@ -43,7 +43,6 @@ function KPI({ icon: Icon, label, value, sub, color }) {
 
 export default function CyberCrime() {
   const { crimes, hotspots, patrols, routes, cybercrime, alerts, predictions, loading } = useData();
-  if (loading) return <div>Loading...</div>;
 
   const byType = getCyberByType(cybercrime);
   const totalLost = getTotalAmountLost(cybercrime);
@@ -58,22 +57,21 @@ export default function CyberCrime() {
       amounts[c.month - 1] += c.amount_lost;
     });
     return months.map((m, i) => ({ month: m, reports: counts[i], amount: Math.round(amounts[i] / 1000) }));
-  }, []);
+  }, [cybercrime]);
 
   // Platform breakdown
   const byPlatform = useMemo(() => {
     const counts = {};
     cybercrime.forEach(c => { counts[c.platform] = (counts[c.platform] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, []);
+  }, [cybercrime]);
 
   // Age group distribution
   const byAge = useMemo(() => {
     const counts = {};
     cybercrime.forEach(c => { counts[c.victim_age_group] = (counts[c.victim_age_group] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => a.name.localeCompare(b.name));
-  }, []);
-
+  }, [cybercrime]);
   // Correlation: cybercrime vs physical crime by area
   const correlation = useMemo(() => {
     const cyberByArea = {};
@@ -85,7 +83,9 @@ export default function CyberCrime() {
       cyber: cyberByArea[area] || 0,
       physical: Math.round((physByArea[area] || 0) / 10),
     }));
-  }, []);
+  }, [cybercrime, crimes]);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="h-full overflow-y-auto page-enter" style={{ background: '#060d1a' }}>

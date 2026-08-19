@@ -11,6 +11,10 @@ from services.ml_service import run_dbscan_engine
 from routes.auth import auth_bp
 from routes.data import data_bp
 from routes.ml import ml_bp
+from routes.forecasts import forecasts_bp
+from routes.audit import audit_bp
+from routes.simulation import simulation_bp
+from routes.routing import routing_bp
 
 # Configure logging
 logging.basicConfig(
@@ -42,7 +46,11 @@ def create_app():
     app.config.from_object(Config)
 
     # Allow CORS from the Vite dev server
-    CORS(app, supports_credentials=True, origins=["http://localhost:3000", "http://127.0.0.1:3000"])
+    CORS(app, supports_credentials=True, origins=[
+        "http://localhost:3000", "http://127.0.0.1:3000",
+        "http://localhost:3001", "http://127.0.0.1:3001",
+        "http://localhost:3002", "http://127.0.0.1:3002",
+    ])
 
     # Initialize extensions
     db.init_app(app)
@@ -52,6 +60,14 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(data_bp, url_prefix='/api')
     app.register_blueprint(ml_bp, url_prefix='/api')
+    app.register_blueprint(forecasts_bp, url_prefix='/api')
+    app.register_blueprint(audit_bp, url_prefix='/api')
+    app.register_blueprint(simulation_bp, url_prefix='/api')
+    app.register_blueprint(routing_bp, url_prefix='/api')
+
+    # Create all tables (non-destructive)
+    with app.app_context():
+        db.create_all()
 
     @app.route('/api/health')
     def health_check():

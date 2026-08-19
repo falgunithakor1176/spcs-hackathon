@@ -1,24 +1,31 @@
 import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, Map, BarChart3, Shield, Truck,
-  Bell, Settings, LogOut, ChevronRight, Activity
+  LayoutDashboard, BarChart3, Shield, Truck,
+  Bell, Settings, LogOut, ChevronRight, Activity,
+  FlaskConical, ScrollText, Globe
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { canAccess } from '../../utils/rbac';
 
-const NAV_ITEMS = [
-  { to: '/command',    icon: LayoutDashboard, label: 'Command Center', shortLabel: 'CMD'  },
-  { to: '/analytics',  icon: BarChart3,        label: 'Crime Analytics', shortLabel: 'ANA'  },
-  { to: '/cybercrime', icon: Shield,           label: 'Cyber Intelligence', shortLabel: 'CYB' },
-  { to: '/patrol',     icon: Truck,            label: 'Patrol Routing', shortLabel: 'PAT'  },
-  { to: '/alerts',     icon: Bell,             label: 'Alert Center',  shortLabel: 'ALT'  },
-  { to: '/settings',   icon: Settings,         label: 'Settings',      shortLabel: 'SET'  },
+const ALL_NAV = [
+  { to: '/command',    icon: LayoutDashboard, label: 'Command Center',     key: 'command'    },
+  { to: '/analytics',  icon: BarChart3,        label: 'Crime Analytics',    key: 'analytics'  },
+  { to: '/cybercrime', icon: Globe,            label: 'Cyber Intelligence', key: 'cybercrime' },
+  { to: '/patrol',     icon: Truck,            label: 'Patrol Routing',     key: 'patrol'     },
+  { to: '/alerts',     icon: Bell,             label: 'Alert Center',       key: 'alerts'     },
+  { to: '/simulation', icon: FlaskConical,     label: 'Simulation',         key: 'simulation' },
+  { to: '/audit-log',  icon: ScrollText,       label: 'Audit Log',          key: 'audit'      },
+  { to: '/settings',   icon: Settings,         label: 'Settings',           key: 'settings'   },
 ];
 
 export default function Sidebar() {
   const { logout, user } = useAuth();
   const [hovered, setHovered] = useState(null);
-  const location = useLocation();
+  const role = user?.role || 'Officer';
+
+  // Filter nav items by role permissions
+  const navItems = ALL_NAV.filter(item => canAccess(role, item.key));
 
   return (
     <aside className="relative z-40 flex flex-col items-center w-14 min-h-screen py-3 border-r border-electric/10"
@@ -35,18 +42,15 @@ export default function Sidebar() {
 
       {/* Nav Items */}
       <nav className="flex flex-col gap-1 flex-1">
-        {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
+        {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             onMouseEnter={() => setHovered(to)}
             onMouseLeave={() => setHovered(null)}
-            className={({ isActive }) =>
-              `nav-item relative ${isActive ? 'active' : ''}`
-            }
+            className={({ isActive }) => `nav-item relative ${isActive ? 'active' : ''}`}
           >
             <Icon size={18} />
-            {/* Tooltip */}
             {hovered === to && (
               <div className="absolute left-14 z-50 flex items-center gap-2 px-3 py-1.5 rounded-md pointer-events-none animate-fade-in"
                 style={{
@@ -66,6 +70,17 @@ export default function Sidebar() {
       {/* Bottom divider */}
       <div className="w-8 h-px mb-3" style={{ background: 'linear-gradient(90deg, transparent, rgba(0,212,255,0.2), transparent)' }} />
 
+      {/* Role badge */}
+      <div
+        title={`${user?.name} | ${user?.role}`}
+        style={{
+          fontSize: 7, fontFamily: 'Orbitron', color: 'var(--electric)',
+          background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.15)',
+          borderRadius: 3, padding: '2px 4px', marginBottom: 6, letterSpacing: '0.05em',
+        }}>
+        {role?.toUpperCase()?.slice(0, 3)}
+      </div>
+
       {/* User Avatar + Logout */}
       <div className="flex flex-col items-center gap-2">
         <div
@@ -79,8 +94,7 @@ export default function Sidebar() {
           onMouseEnter={() => setHovered('logout')}
           onMouseLeave={() => setHovered(null)}
           className="nav-item relative"
-          title="Logout"
-        >
+          title="Logout">
           <LogOut size={16} />
           {hovered === 'logout' && (
             <div className="absolute left-14 z-50 px-3 py-1.5 rounded-md pointer-events-none"

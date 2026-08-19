@@ -150,7 +150,7 @@ export default function TopHeader() {
           <span className="text-xs font-orbitron font-bold" style={{ color: '#FF1744', letterSpacing: '0.05em' }}>
             {crimes_today}
           </span>
-          <span className="text-xs" style={{ color: 'var(--text-muted)', fontSize: '10px' }}>LIVE</span>
+          <span className="text-xs" style={{ color: 'var(--text-muted)', fontSize: '10px' }}>AUTO-REFRESH</span>
         </div>
 
         {/* Active patrol counter */}
